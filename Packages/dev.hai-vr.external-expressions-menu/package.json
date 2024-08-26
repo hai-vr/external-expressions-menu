@@ -1,0 +1,17 @@
+{
+  "name": "dev.hai-vr.external-expressions-menu",
+  "displayName": "Haï ~ External Expressions Menu",
+  "version": "1.0.0-alpha.1",
+  "unity": "2019.4",
+  "description": "CHANGEME",
+  "vrchatVersion" : "2022.1.1",
+  "author" : {
+    "name" : "Haï~"
+  },
+  "vpmDependencies": {
+  },
+  "url" : "https://docs.hai-vr.dev/docs/products/CHANGEME",
+  "documentationUrl": "https://docs.hai-vr.dev/docs/products/CHANGEME",
+  "changelogUrl": "https://docs.hai-vr.dev/docs/changelogs/CHANGEME",
+  "license": "NOT DEFINED, CHANGE ME"
+}
