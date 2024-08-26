@@ -99,7 +99,21 @@ namespace ExternalExpresssionsMenu.Editor
                 NullValueHandling = NullValueHandling.Ignore
             });
 
-            var endbit = $"/VRChat/VRChat/OSC/{userId}/Avatars/ExternalExpressionsMenu_{avatarId}.json";
+            // VRChat does not like it when the Avatars/ folder contains files it has not created.
+/*
+Error      -  [All] Avatar attach failed with exception: System.NullReferenceException: Object reference not set to an instance of an object.
+  at ???+AvatarOscConfig.GetByName (System.String name) ... 
+  at ???+AvatarOscConfig..ctor (System.String id, System.String name, System.Collections.Generic.IEnumerable`1[T] avatarParameters, ???+AvatarOscConfig copyExistingFrom, System.Int32 paramsHash) ...
+  
+Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
+ */
+            {
+                var directory = $"/VRChat/VRChat/OSC/{userId}/Hai";
+                var fullDirectory = $"{VRC_SdkBuilder.GetLocalLowPath()}{directory}";
+                Directory.CreateDirectory(fullDirectory);
+            }
+
+            var endbit = $"/VRChat/VRChat/OSC/{userId}/Hai/ExternalExpressionsMenu_{avatarId}.json";
             var path = $"{VRC_SdkBuilder.GetLocalLowPath()}{endbit}";
             var printLocation = $"%LOCALAPPDATA%Low{endbit}"; // Doesn't print the account name to the logs
 
