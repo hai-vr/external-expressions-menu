@@ -25,6 +25,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "nadena.dev.ndmf",
+            "expression": "",
+            "define": "EEM_NDMF_IS_INSTALLED"
+        }
+    ],
     "noEngineReferences": false
 }
