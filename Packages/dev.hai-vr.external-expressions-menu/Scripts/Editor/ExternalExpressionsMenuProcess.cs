@@ -110,6 +110,9 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
                     synced = parameter.networkSynced,
                     defaultValue = parameter.defaultValue
                 })
+                // Originally, Expression Parameters assets had by default a list of empty parameters, for the user to fill in.
+                // We should exclude those.
+                .Where(expression => expression.parameter != "") 
                 .OrderBy(expression => expression.parameter)
                 .ToArray();
         }
@@ -128,6 +131,8 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
 
         private EMContact[] DevelopContactParameters(VRCContactReceiver[] contacts)
         {
+            // The user may have multiple Contacts with the same parameter name, with different settings (i.e. mutually exclusive).
+            // This can't be helped, so store both.
             return contacts
                 .Select(receiver =>
                 {
@@ -159,6 +164,8 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
 
         private EMPhysBone[] DevelopPhysBoneParameters(VRCPhysBone[] physBones)
         {
+            // The user may have multiple PhysBones with the same parameter name, with different settings (i.e. mutually exclusive).
+            // This can't be helped, so store both.
             return physBones
                 .Select(physBone => new EMPhysBone
                 {
