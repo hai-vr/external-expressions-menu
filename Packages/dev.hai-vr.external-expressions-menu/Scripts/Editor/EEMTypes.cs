@@ -6,12 +6,13 @@
         public EMContact[] contactParameters;
         public EMPhysBone[] physBoneParameters;
         public EMMenu[] menu;
+        public string[] icons;
     }
 
     public class EMMenu
     {
         public string label;
-        public string icon;
+        public int icon;
         public string type;
         public string parameter;
         public float value;
@@ -28,7 +29,7 @@
     {
         public string parameter;
         public string label;
-        public string icon;
+        public int icon;
     }
 
     public class EMExpression

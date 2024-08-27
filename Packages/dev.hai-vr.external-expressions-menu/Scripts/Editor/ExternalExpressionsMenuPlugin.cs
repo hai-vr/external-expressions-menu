@@ -85,13 +85,16 @@ namespace ExternalExpresssionsMenu.Editor
             var physBones = context.AvatarRootTransform.GetComponentsInChildren<VRCPhysBone>(true)
                 .Where(physBone => !string.IsNullOrEmpty(physBone.parameter))
                 .ToArray();
+            var visited = VisitAllSubMenus(menu);
+            var icons = CollectAllIcons(visited.Keys.ToArray());
 
             var manifest = new EMManifest
             {
                 expressionParameters = DevelopExpressionParameters(parameters.parameters),
                 contactParameters = DevelopContactParameters(contacts),
                 physBoneParameters = DevelopPhysBoneParameters(physBones),
-                menu = DevelopMenu(menu)
+                menu = DevelopMenu(menu, visited, icons),
+                icons = icons.Select(EncodeIcon).ToArray()
             };
 
             var content = JsonConvert.SerializeObject(manifest, Formatting.Indented, new JsonSerializerSettings
@@ -131,7 +134,7 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
             return parameters
                 .Select(parameter => new EMExpression
                 {
-                    parameter = parameter.name,
+                    parameter = parameter.name ?? "",
                     type = EMType(parameter.valueType),
                     saved = parameter.saved,
                     synced = parameter.networkSynced,
@@ -161,7 +164,7 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
                     var scale = (receiver.rootTransform != null ? receiver.rootTransform : receiver.transform).lossyScale;
                     return new EMContact
                     {
-                        parameter = receiver.parameter,
+                        parameter = receiver.parameter ?? "",
                         receiverType = EMReceiverType(receiver.receiverType),
                         radius = receiver.radius,
                         lossyScaleX = scale.x,
@@ -189,7 +192,7 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
             return physBones
                 .Select(physBone => new EMPhysBone
                 {
-                    parameter = physBone.parameter,
+                    parameter = physBone.parameter ?? "",
                     maxStretch = physBone.maxStretch,
                     maxSquish = physBone.maxSquish,
                     limitType = EMLimitType(physBone.limitType),
@@ -212,7 +215,34 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
             }
         }
 
-        private EMMenu[] DevelopMenu(VRCExpressionsMenu menu)
+        private List<Texture2D> CollectAllIcons(VRCExpressionsMenu[] menus)
+        {
+            return menus
+                .SelectMany(menu => menu.controls)
+                .SelectMany(control =>
+                {
+                    var texs = new List<Texture2D>();
+                    texs.Add(control.icon);
+
+                    var expectedSubParams = SubParamCount(control.type);
+                    if (expectedSubParams > 0 && 0 < control.labels.Length) texs.Add(control.labels[0].icon);
+                    if (expectedSubParams > 1 && 1 < control.labels.Length) texs.Add(control.labels[1].icon);
+                    if (expectedSubParams > 2 && 2 < control.labels.Length) texs.Add(control.labels[2].icon);
+                    if (expectedSubParams > 3 && 3 < control.labels.Length) texs.Add(control.labels[3].icon);
+
+                    return texs;
+                })
+                .Where(tex => tex != null)
+                .Distinct()
+                .ToList();
+        }
+
+        private EMMenu[] DevelopMenu(VRCExpressionsMenu menu, Dictionary<VRCExpressionsMenu, int> visited, List<Texture2D> icons)
+        {
+            return BuildFor(menu, visited, icons, new[] { menu });
+        }
+
+        private Dictionary<VRCExpressionsMenu, int> VisitAllSubMenus(VRCExpressionsMenu menu)
         {
             var visited = new Dictionary<VRCExpressionsMenu, int>();
             var id = 0;
@@ -220,11 +250,10 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
             visited.Add(menu, id);
             id++;
             CollectSubMenus(menu, visited, ref id);
-
-            return BuildFor(menu, visited, new[] { menu });
+            return visited;
         }
 
-        private EMMenu[] BuildFor(VRCExpressionsMenu menu, Dictionary<VRCExpressionsMenu, int> ids, VRCExpressionsMenu[] visitedInChain)
+        private EMMenu[] BuildFor(VRCExpressionsMenu menu, Dictionary<VRCExpressionsMenu, int> ids, List<Texture2D> icons, VRCExpressionsMenu[] visitedInChain)
         {
             return menu.controls
                 .Select(control =>
@@ -235,20 +264,20 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
                     
                     var ourMenu = new EMMenu
                     {
-                        label = control.name,
-                        icon = EncodeIcon(control.icon),
+                        label = control.name ?? "",
+                        icon = icons.IndexOf(control.icon),
                         type = ControlType(control.type),
-                        parameter = control.parameter.name,
+                        parameter = control.parameter.name ?? "",
                         value = control.value,
-                        subMenu = isNonRecursive ? BuildFor(control.subMenu, ids, visitedInChain.Concat(new []{ menu }).ToArray()) : null,
+                        subMenu = isNonRecursive ? BuildFor(control.subMenu, ids, icons, visitedInChain.Concat(new []{ menu }).ToArray()) : null,
                         isSubMenuRecursive = isRecursive,
                         subMenuId = isSubMenu ? ids[control.subMenu] : -1
                     };
                     var expectedSubParams = SubParamCount(control.type);
-                    if (expectedSubParams > 0) ourMenu.axis0 = AxisOf(control, 0);
-                    if (expectedSubParams > 1) ourMenu.axis1 = AxisOf(control, 1);
-                    if (expectedSubParams > 2) ourMenu.axis2 = AxisOf(control, 2);
-                    if (expectedSubParams > 3) ourMenu.axis3 = AxisOf(control, 3);
+                    if (expectedSubParams > 0) ourMenu.axis0 = AxisOf(control, 0, icons);
+                    if (expectedSubParams > 1) ourMenu.axis1 = AxisOf(control, 1, icons);
+                    if (expectedSubParams > 2) ourMenu.axis2 = AxisOf(control, 2, icons);
+                    if (expectedSubParams > 3) ourMenu.axis3 = AxisOf(control, 3, icons);
                     
                     return ourMenu;
                 })
@@ -270,13 +299,13 @@ Error      -  [Behaviour] FATAL ERROR: Couldn't even switch to error avatar!
             }
         }
 
-        private EMAxis AxisOf(VRCExpressionsMenu.Control control, int index)
+        private EMAxis AxisOf(VRCExpressionsMenu.Control control, int index, List<Texture2D> icons)
         {
             return new EMAxis
             {
-                parameter = index < control.subParameters.Length ? control.subParameters[index].name : "",
-                label = index < control.labels.Length ? control.labels[index].name : "",
-                icon = index < control.labels.Length ? EncodeIcon(control.labels[index].icon) : EncodeIcon(null)
+                parameter = index < control.subParameters.Length ? control.subParameters[index].name ?? "" : "",
+                label = index < control.labels.Length ? control.labels[index].name ?? "" : "",
+                icon = index < control.labels.Length ? icons.IndexOf(control.labels[index].icon) : -1
             };
         }
 
