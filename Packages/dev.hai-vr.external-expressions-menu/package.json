@@ -9,6 +9,7 @@
     "name" : "Haï~"
   },
   "vpmDependencies": {
+    "nadena.dev.ndmf": ">=1.2.0 <2.0.0-a"
   },
   "url" : "https://docs.hai-vr.dev/docs/products/h-view",
   "documentationUrl": "https://docs.hai-vr.dev/docs/products/h-view",
